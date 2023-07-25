@@ -5,12 +5,16 @@ MPI implementation such as openmpi or MPICH
 
 # Install
 
-Under Recorder-util directory
+Install from source
 ```
 pip install -r requirements.txt
 pip install .
 ```
 
+Or Install from pip
+```
+pip install recorder-utils
+```
 
 # Usage
 

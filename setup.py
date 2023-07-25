@@ -24,7 +24,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="recorder-utils",
-    version="0.1.0",
+    version="0.2.0",
     author="Onewbiek",
     author_email="yankun0213@gmail.com",
     description="Recorder utility build upon the package \'recorder-viz\'",
@@ -33,6 +33,10 @@ setuptools.setup(
     url="https://github.com/onewbiek/Recorder-utils",
     packages=['recorder_utils'],                  # package for import: after installaion, import recorder_utils
     package_data = {'recorder_utils': ['*.h']},   # *.h by default will not be copied, we use this to ship it.
+    install_requires=[
+        "mpi4py==3.1.4",
+        "pandas",
+    ],
     classifiers=[
         "Programming Language :: Python :: 2.7",
         "License :: OSI Approved :: University of Illinois/NCSA Open Source License",

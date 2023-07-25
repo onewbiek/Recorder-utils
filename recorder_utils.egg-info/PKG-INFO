@@ -1,15 +1,18 @@
 Metadata-Version: 2.1
 Name: recorder-utils
 Version: 0.1.0
-Summary: UNKNOWN
-Home-page: UNKNOWN
+Summary: Recorder utility build upon the package 'recorder-viz'
+Home-page: https://github.com/onewbiek/Recorder-utils
 Author: Onewbiek
+Author-email: yankun0213@gmail.com
 License: UNKNOWN
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 2.7
+Classifier: License :: OSI Approved :: University of Illinois/NCSA Open Source License
 Classifier: Operating System :: OS Independent
 Requires-Python: >=2.7
 Description-Content-Type: text/markdown
+License-File: LICENSE
 
 # Prerequisite
 

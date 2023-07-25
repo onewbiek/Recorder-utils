@@ -41,7 +41,7 @@ setuptools.setup(
     python_requires='>=2.7',
     entry_points={
         "console_scripts": [
-            "recorder2csv=recorder2csv.recorder2csv:main"
+            "recorder2csv=recorder_utils.recorder2csv:main"
         ]
     },
     ext_modules=[c_reader_module],

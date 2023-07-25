@@ -1,3 +1,0 @@
-[console_scripts]
-recorder2csv = recorder2csv.recorder2csv:main
-

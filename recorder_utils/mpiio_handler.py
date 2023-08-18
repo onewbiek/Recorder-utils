@@ -98,6 +98,10 @@ def handle_mpiio(reader):
     endOfFile["stderr"] = [0] * ranks
     endOfFile["stdout"] = [0] * ranks
 
+    filemap = {}
+    for rank in range(ranks):
+        filemap.update(reader.LMs[rank].filemap)
+
     for record in records:
 
         rank = record.rank
@@ -106,7 +110,8 @@ def handle_mpiio(reader):
         handle_metadata_operations(record, offsetBook, func_list, ranks, closeBook, endOfFile, idNameMap)
         filename, offset, count = handle_data_operations(record, offsetBook, func_list, endOfFile, idNameMap)
 
-        if not ignore_files(filename):
-            intervals.append( [filename, rank, func, offset, count, record.tstart, record.tend] )
+        if not ignore_files(filename) and filename in filemap.values():
+            file_id = list(filter(lambda x: filemap[x] == filename, filemap))[0]
+            intervals.append( [file_id, rank, func, offset, count, record.tstart, record.tend] )
 
     return intervals

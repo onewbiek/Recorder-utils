@@ -6,6 +6,8 @@
 from ctypes import *
 import os, glob, struct
 
+from .lookup3 import hashlittle
+
 class RecorderMetadata(Structure):
     _fields_ = [
             ("total_ranks", c_int),
@@ -20,7 +22,7 @@ class LocalMetadata():
     def __init__(self, func_list, records, total_records):
         self.total_records = total_records
         self.num_files = 0
-        self.filemap = set()
+        self.filemap = {}
         self.function_count = [0] * 256
 
         for idx in range(total_records):
@@ -37,7 +39,8 @@ class LocalMetadata():
             elif "open" in func or "close" in func or "creat" in func \
                 or "seek" in func or "sync" in func:
                 fstr = r.args[0]
-                self.filemap.add(fstr if type(fstr)==str else fstr.decode('utf-8'))
+                filename = fstr if type(fstr)==str else fstr.decode('utf-8')
+                self.filemap[hashlittle(filename)] = filename
 
         self.num_files = len(self.filemap)
 

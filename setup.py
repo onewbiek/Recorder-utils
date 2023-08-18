@@ -24,7 +24,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="recorder-utils",
-    version="0.2.0",
+    version="0.3.0",
     author="Onewbiek",
     author_email="yankun0213@gmail.com",
     description="Recorder utility build upon the package \'recorder-viz\'",

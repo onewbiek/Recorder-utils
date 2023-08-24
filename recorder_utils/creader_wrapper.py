@@ -1,8 +1,7 @@
-# Author: Chen Wang
+# Author: Chen Wang (original author), Yankun Xia (modifier)
 
 #!/usr/bin/env python
 # encoding: utf-8
-
 from ctypes import *
 import os, glob, struct
 
@@ -15,8 +14,8 @@ class RecorderMetadata(Structure):
             ("time_resolution", c_double),
             ("ts_buffer_elements", c_int),
             ("ts_compression_algo", c_int),
+            ("interprocess_compression", c_int),
     ]
-
 
 class LocalMetadata():
     def __init__(self, func_list, records, total_records):
@@ -43,7 +42,6 @@ class LocalMetadata():
                 self.filemap[hashlittle(filename)] = filename
 
         self.num_files = len(self.filemap)
-
 
 class PyRecord(Structure):
     # The fields must be identical as PyRecord in reader.h
@@ -103,13 +101,13 @@ class RecorderReader:
         for rank in range(self.GM.total_ranks):
             LM = LocalMetadata(self.funcs, self.records[rank], counts[rank])
             self.LMs.append(LM)
-            # print("Rank: %d, intercepted calls: %d, accessed files: %d" %(rank, counts[rank], LM.num_files))
+            print("Rank: %d, intercepted calls: %d, accessed files: %d" %(rank, counts[rank], LM.num_files))
 
     def load_func_list(self, global_metadata_path):
         nprocs = 0
         with open(global_metadata_path, 'rb') as f:
             nprocs = struct.unpack('i', f.read(4))[0]
-            f.seek(32, 0)   # skip the metadata header, e.g., total_ranks, etc.
+            f.seek(40, 0)   # skip the metadata header, e.g., total_ranks, etc.
             self.funcs = f.read().splitlines()
             self.funcs = [func.decode('utf-8') for func in self.funcs]
         return nprocs

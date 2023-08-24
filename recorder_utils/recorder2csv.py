@@ -12,7 +12,7 @@ from .build_offset_intervals import build_offset_intervals
 
 def generate_csv(reader, output_path):
     output_path = os.path.abspath(output_path)
-    if output_path[-4:] != ".csv":
+    if not output_path.endswith(".csv"):
         output_path += ".csv"
 
     decimal =  int(math.log10(1 / reader.GM.time_resolution))

@@ -73,4 +73,4 @@ args_to_strs : string[], utf-8
 
 ## Intervals
 
-Current intervals are taken from POSIX and MPIIO layers. They are stored in the dataframe that return by the function ```build_offset_intervals```. The intervals contain I/O records and corresponding ```filename, rank, function, offset, size, start time, and end time```.
+Current intervals are taken from POSIX and MPIIO layers. They are stored in the dataframe that return by the function ```build_offset_intervals```. The intervals contain I/O records and corresponding ```file_id, rank, function, offset, size, start time, and end time```.

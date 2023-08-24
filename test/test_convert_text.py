@@ -1,5 +1,6 @@
 from recorder_utils import RecorderReader
 import math
+import sys
 
 def get_func_name(reader, record):
     func_list = reader.funcs
@@ -19,8 +20,8 @@ def get_func_type(reader, record):
     else: return 'POSIX'
 
 
-input = "data/FLASH_Sedov3D_32Procs_IndpIO"
-output = input.replace('/', '/files_txt/') + '.txt'
+input = sys.argv[1]
+output = input + '.txt'
 reader = RecorderReader(input)
 
 with open(output, 'w') as f:

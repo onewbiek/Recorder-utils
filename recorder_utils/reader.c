@@ -77,7 +77,6 @@ void recorder_init_reader(const char* logs_dir, RecorderReader *reader) {
 
 	int nprocs= reader->metadata.total_ranks;
 
-    reader->num_ugs = nprocs;
 	reader->ug_ids = malloc(sizeof(int) * nprocs);
 	reader->csts   = malloc(sizeof(CST*) * nprocs);
 	reader->cfgs   = malloc(sizeof(CFG*) * nprocs);
@@ -88,24 +87,36 @@ void recorder_init_reader(const char* logs_dir, RecorderReader *reader) {
 		reader->cfgs[i] = NULL;
 	}
 
-	for(int i = 0; i < nprocs; i++) {
-		recorder_read_cst(reader, i);
-        recorder_read_cfg(reader, i);
-    }
+	if(reader->metadata.interprocess_compression) {
+		recorder_read_cst(reader, 0);
+		for(int i = 1; i < nprocs; i++)
+			reader->csts[i] = reader->csts[0];
 
+		char ug_metadata_fname[1024] = {0};
+		sprintf(ug_metadata_fname, "%s/ug.mt", reader->logs_dir);
+		FILE* f = fopen(ug_metadata_fname, "rb");
+		fread(reader->ug_ids, sizeof(int), nprocs, f);
+		fread(&reader->num_ugs, sizeof(int), 1, f);
+		fclose(f);
+
+		for(int i = 0; i < reader->num_ugs; i++) {
+			recorder_read_cfg(reader, i);
+		}
+	}
 }
 
 void recorder_free_reader(RecorderReader *reader) {
     assert(reader);
 	free(reader->ug_ids);
 
-    int nprocs= reader->metadata.total_ranks;
-    for(int i = 0; i < nprocs; i++) {
-        recorder_free_cst(reader->csts[i]);
-        free(reader->csts[i]);
-		recorder_free_cfg(reader->cfgs[i]);
-		free(reader->cfgs[i]);
-    }
+	if(reader->metadata.interprocess_compression) {
+		recorder_free_cst(reader->csts[0]);
+		free(reader->csts[0]);
+		for(int i = 0; i < reader->num_ugs; i++) {
+			recorder_free_cfg(reader->cfgs[i]);
+			free(reader->cfgs[i]);
+		}
+	}
 
 	free(reader->csts);
 	free(reader->cfgs);
@@ -206,18 +217,24 @@ void recorder_read_cst(RecorderReader *reader, int rank) {
     int key_len;
     fread(&cst->entries, sizeof(int), 1, f);
 
+	// cst->cs_list will be stored in the terminal_id order.
     cst->cs_list = malloc(cst->entries * sizeof(CallSignature));
 
     for(int i = 0; i < cst->entries; i++) {
-        fread(&cst->cs_list[i].terminal_id, sizeof(int), 1, f);
-        fread(&cst->cs_list[i].key_len, sizeof(int), 1, f);
+		int terminal_id;
+        fread(&terminal_id, sizeof(int), 1, f);
+		assert(terminal_id < cst->entries);
 
-        cst->cs_list[i].key = malloc(cst->cs_list[i].key_len);
-        fread(cst->cs_list[i].key, 1, cst->cs_list[i].key_len, f);
+		CallSignature* cs = &(cst->cs_list[terminal_id]);
+		cs->terminal_id = terminal_id;
 
-        assert(cst->cs_list[i].terminal_id < cst->entries);
+        fread(&(cs->rank), sizeof(int), 1, f);
+        fread(&(cs->key_len), sizeof(int), 1, f);
+        fread(&(cs->count), sizeof(int), 1, f);
+
+        cs->key = malloc(cs->key_len);
+        fread(cs->key, 1, cs->key_len, f);
     }
-
     fclose(f);
 }
 
@@ -250,14 +267,18 @@ void recorder_read_cfg(RecorderReader *reader, int rank) {
 }
 
 void recorder_get_cst_cfg(RecorderReader* reader, int rank, CST** cst, CFG** cfg) {
-
-	if(reader->csts[rank] == NULL)
-		recorder_read_cst(reader, rank);
-	if(reader->cfgs[rank] == NULL)
-		recorder_read_cfg(reader, rank);
+	if(reader->metadata.interprocess_compression) {
+		// Do nothing, as we have already read
+		// csts and cfgs during initialization
+	} else {
+		if(reader->csts[rank] == NULL)
+			recorder_read_cst(reader, rank);
+		if(reader->cfgs[rank] == NULL)
+			recorder_read_cfg(reader, rank);
+	}
 
 	*cst = reader->csts[rank];
-	*cfg = reader->cfgs[rank];
+	*cfg = reader->cfgs[reader->ug_ids[rank]];
 }
 
 
@@ -351,7 +372,7 @@ size_t get_uncompressed_count(RecorderReader* reader, CFG* cfg, int rule_id) {
 
 
 /**
- * Code below is used for recorder2csv
+ * Code below is used for recorder-viz
  */
 typedef struct records_with_idx {
     PyRecord* records;

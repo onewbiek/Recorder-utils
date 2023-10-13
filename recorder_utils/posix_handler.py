@@ -57,14 +57,14 @@ def handle_metadata_operations(record, offsetBook, func_list, total_ranks, close
 
     if "fopen" in func or "fdopen" in func:
         # TODO check fdopen
-        filename = args[0]
+        filename = args[0].replace('./', '')
         add_tracker(total_ranks, filename, endOfFile, offsetBook)
         offsetBook[filename][rank] = 0
         openMode = args[1]
         if 'a' in openMode:
             offsetBook[filename][rank] = get_latest_offset(filename, rank, closeBook, endOfFile)
     elif "open" in func:
-        filename = args[0]
+        filename = args[0].replace('./', '')
         add_tracker(total_ranks, filename, endOfFile, offsetBook)
         offsetBook[filename][rank] = 0
         openMode = int( args[1] )

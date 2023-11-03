@@ -4,12 +4,7 @@
 # encoding: utf-8
 
 from .exclusions import ignore_files
-from mpi4py import MPI
-
-
-def type2size(type_name):
-    if type_name == 'MPI_TYPE_UNKNOWN': return 0
-    else: return eval(type_name.replace('MPI_', 'MPI.')).Get_size()
+from .mpi_constants import *
 
 
 def handle_data_operations(record, offsetBook, func_list, endOfFile, idNameMap):
@@ -19,12 +14,12 @@ def handle_data_operations(record, offsetBook, func_list, endOfFile, idNameMap):
     filename, offset, count = "", -1, -1
 
     if 'write_at' in func or 'read_at' in func:
-        fid, offset, count = args[0], int(args[1]), int(args[3]) * type2size(args[4])
+        fid, offset, count = args[0], int(args[1]), int(args[3]) * type2size[args[4]]
         filename = idNameMap[fid]
         offsetBook[filename][rank] = offset + count
         endOfFile[filename][rank] = max(endOfFile[filename][rank], offsetBook[filename][rank])
     elif 'write' in func or 'read' in func:
-        fid, count = args[0], int(args[2]) * type2size(args[3])
+        fid, count = args[0], int(args[2]) * type2size[args[3]]
         filename = idNameMap[fid]
         offset = offsetBook[filename][rank]
         offsetBook[filename][rank] += count
@@ -50,20 +45,20 @@ def handle_metadata_operations(record, offsetBook, func_list, total_ranks, close
     args = record.args_to_strs()
 
     if 'open' in func:
-        filename, openMode, fid = args[1], int(args[2]), args[4]
+        filename, openMode, fid = args[1].replace('./', ''), int(args[2]), args[4]
         add_tracker(total_ranks, filename, endOfFile, offsetBook)
         offsetBook[filename][rank] = 0
         idNameMap[fid] = filename
-        if openMode == MPI.MODE_APPEND:  # TODO need a better way to test for MPI_MODE_APPEND
+        if openMode == 128: # MPI.MODE_APPEND:  # TODO need a better way to test for MPI_MODE_APPEND
             offsetBook[filename][rank] = get_latest_offset(filename, rank, closeBook, endOfFile)
     elif 'seek' in func: # TODO: check seek_shared
         fid, offset, whence = args[0], int(args[1]), int(args[2])
         filename = idNameMap[fid]
-        if whence == MPI.SEEK_SET:
+        if whence == 600: # MPI.SEEK_SET:
             offsetBook[filename][rank] = offset
-        elif whence == MPI.SEEK_CUR:
+        elif whence == 602: # MPI.SEEK_CUR:
             offsetBook[filename][rank] += offset
-        elif whence == MPI.SEEK_END:
+        elif whence == 604: # MPI.SEEK_END:
             offsetBook[filename][rank] = get_latest_offset(filename, rank, closeBook, endOfFile) + offset
     elif 'close' in func or 'sync' in func:
         fid = args[0]

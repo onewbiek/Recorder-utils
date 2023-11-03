@@ -39,6 +39,7 @@ class LocalMetadata():
                 or "seek" in func or "sync" in func:
                 fstr = r.args[0]
                 filename = fstr if type(fstr)==str else fstr.decode('utf-8')
+                filename = filename.replace('./', '')
                 self.filemap[hashlittle(filename)] = filename
 
         self.num_files = len(self.filemap)
